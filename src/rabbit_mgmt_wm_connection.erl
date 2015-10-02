@@ -47,9 +47,9 @@ to_json(ReqData, Context) ->
 delete_resource(ReqData, Context) ->
     Conn = conn(ReqData),
     Pid = proplists:get_value(pid, Conn),
-    Reason = case wrq:get_req_header(<<"X-Reason">>, ReqData) of
-                 undefined -> "Closed via management plugin";
-                 V         -> V
+    Reason = case cowboy_req:header(<<"X-Reason">>, ReqData) of
+                 {undefined, _} -> "Closed via management plugin";
+                 {V, _}         -> binary_to_list(V)
              end,
     case proplists:get_value(type, Conn) of
         direct  -> amqp_direct_connection:server_close(Pid, 320, Reason);

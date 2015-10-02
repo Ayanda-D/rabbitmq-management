@@ -83,4 +83,4 @@ queue(VHost, QName) ->
         {error, not_found} -> not_found
     end.
 
-qs_true(Key, ReqData) -> "true" =:= wrq:get_qs_value(Key, ReqData).
+qs_true(Key, ReqData) -> <<"true">> =:= element(1, cowboy_req:qs_val(list_to_binary(Key), ReqData)).

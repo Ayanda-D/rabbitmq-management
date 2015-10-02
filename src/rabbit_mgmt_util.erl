@@ -468,8 +468,8 @@ id0(Key, ReqData) ->
     end.
 
 with_decode(Keys, ReqData, Context, Fun) ->
-    %% @todo hmm hmm
-    with_decode(Keys, wrq:req_body(ReqData), ReqData, Context, Fun).
+    {ok, Body, ReqData1} = cowboy_req:body(ReqData),
+    with_decode(Keys, Body, ReqData1, Context, Fun).
 
 with_decode(Keys, Body, ReqData, Context, Fun) ->
     case decode(Keys, Body) of
@@ -513,8 +513,8 @@ http_to_amqp(MethodName, ReqData, Context, Transformers, Extra) ->
         not_found ->
             not_found(vhost_not_found, ReqData, Context);
         VHost ->
-            %% @todo hmm hmm
-            case decode(wrq:req_body(ReqData)) of
+            {ok, Body, ReqData1} = cowboy_req:body(ReqData),
+            case decode(Body) of
                 {ok, Props} ->
                     try
                         Node = case pget(<<"node">>, Props) of
@@ -522,14 +522,14 @@ http_to_amqp(MethodName, ReqData, Context, Transformers, Extra) ->
                                    N         -> rabbit_nodes:make(
                                                   binary_to_list(N))
                                end,
-                        amqp_request(VHost, ReqData, Context, Node,
+                        amqp_request(VHost, ReqData1, Context, Node,
                                      props_to_method(
                                        MethodName, Props, Transformers, Extra))
                     catch {error, Error} ->
-                            bad_request(Error, ReqData, Context)
+                            bad_request(Error, ReqData1, Context)
                     end;
                 {error, Reason} ->
-                    bad_request(Reason, ReqData, Context)
+                    bad_request(Reason, ReqData1, Context)
             end
     end.
 

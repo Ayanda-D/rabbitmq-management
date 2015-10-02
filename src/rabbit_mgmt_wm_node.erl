@@ -58,8 +58,8 @@ augment(ReqData, Node, Data) ->
                 Data, [memory, binary]).
 
 augment(Key, ReqData, Node, Data) ->
-    case wrq:get_qs_value(atom_to_list(Key), ReqData) of
-        "true" -> Res = case rpc:call(Node, rabbit_vm, Key, [], infinity) of
+    case cowboy_req:qs_val(list_to_binary(atom_to_list(Key)), ReqData) of
+        {<<"true">>, _} -> Res = case rpc:call(Node, rabbit_vm, Key, [], infinity) of
                             {badrpc, _} -> not_available;
                             Result      -> Result
                         end,

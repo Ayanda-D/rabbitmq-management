@@ -57,7 +57,7 @@ accept_content(ReqData, Context) ->
       [{exchange, rabbit_mgmt_util:id(exchange, ReqData)}]).
 
 delete_resource(ReqData, Context) ->
-    IfUnused = "true" =:= wrq:get_qs_value("if-unused", ReqData),
+    IfUnused = <<"true">> =:= element(1, cowboy_req:qs_val(<<"if-unused">>, ReqData)),
     rabbit_mgmt_util:amqp_request(
       rabbit_mgmt_util:vhost(ReqData), ReqData, Context,
       #'exchange.delete'{exchange  = id(ReqData),
