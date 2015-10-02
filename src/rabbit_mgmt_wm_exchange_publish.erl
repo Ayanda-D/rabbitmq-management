@@ -16,21 +16,23 @@
 
 -module(rabbit_mgmt_wm_exchange_publish).
 
--export([init/1, resource_exists/2, post_is_create/2, is_authorized/2,
+-export([init/3, rest_init/2, resource_exists/2, post_is_create/2, is_authorized/2,
          allowed_methods/2,  content_types_provided/2, process_post/2]).
 
 -include("rabbit_mgmt.hrl").
--include_lib("webmachine/include/webmachine.hrl").
 -include_lib("amqp_client/include/amqp_client.hrl").
 
 %%--------------------------------------------------------------------
-init(_Config) -> {ok, #context{}}.
+
+init(_, _, _) -> {upgrade, protocol, cowboy_rest}.
+
+rest_init(Req, _Config) -> {ok, Req, #context{}}.
 
 allowed_methods(ReqData, Context) ->
-    {['POST'], ReqData, Context}.
+    {[<<"POST">>], ReqData, Context}.
 
 content_types_provided(ReqData, Context) ->
-   {[{"application/json", to_json}], ReqData, Context}.
+   {[{<<"application/json">>, to_json}], ReqData, Context}.
 
 resource_exists(ReqData, Context) ->
     {case rabbit_mgmt_wm_exchange:exchange(ReqData) of
@@ -38,6 +40,7 @@ resource_exists(ReqData, Context) ->
          _         -> true
      end, ReqData, Context}.
 
+%% @todo obv
 post_is_create(ReqData, Context) ->
     {false, ReqData, Context}.
 

@@ -23,7 +23,6 @@
 -include_lib("amqp_client/include/amqp_client.hrl").
 
 -define(CONTEXT, rabbit_mgmt).
--define(STATIC_PATH, "priv/www").
 
 start(_Type, _StartArgs) ->
     {ok, Listener} = application:get_env(rabbitmq_management, listener),
@@ -55,14 +54,16 @@ unregister_context() ->
 
 make_loop(IgnoreApps) ->
     Dispatch = rabbit_mgmt_dispatcher:build_dispatcher(IgnoreApps),
-    WMLoop = rabbit_webmachine:makeloop(Dispatch),
-    LocalPaths = [filename:join(module_path(M), ?STATIC_PATH) ||
-                     M <- rabbit_mgmt_dispatcher:modules(IgnoreApps)],
-    fun(Req) -> respond(Req, LocalPaths, WMLoop) end.
+    io:format(user, "~p~n", [Dispatch]),
 
-module_path(Module) ->
-    {file, Here} = code:is_loaded(Module),
-    filename:dirname(filename:dirname(Here)).
+
+
+    Dispatch.
+%    WMLoop = rabbit_webmachine:makeloop(Dispatch),
+%    LocalPaths = [filename:join(module_path(M), ?STATIC_PATH) ||
+%                     M <- rabbit_mgmt_dispatcher:modules(IgnoreApps)],
+%% @todo Redirects.
+%    fun(Req) -> respond(Req, LocalPaths, WMLoop) end.
 
 respond(Req, LocalPaths, WMLoop) ->
     Path = Req:get(path),
@@ -70,6 +71,7 @@ respond(Req, LocalPaths, WMLoop) ->
     case Path of
         "/api/" ++ Rest when length(Rest) > 0 ->
             WMLoop(Req);
+%% @todo Figure out those.
         "" ->
             Req:respond(Redirect("/"));
         "/mgmt/" ->

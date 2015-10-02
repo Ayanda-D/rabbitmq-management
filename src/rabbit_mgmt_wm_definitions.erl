@@ -16,7 +16,7 @@
 
 -module(rabbit_mgmt_wm_definitions).
 
--export([init/1, to_json/2, content_types_provided/2, is_authorized/2]).
+-export([init/3, rest_init/2, to_json/2, content_types_provided/2, is_authorized/2]).
 -export([content_types_accepted/2, allowed_methods/2, accept_json/2]).
 -export([post_is_create/2, create_path/2, accept_multipart/2]).
 
@@ -25,22 +25,25 @@
 -import(rabbit_misc, [pget/2, pget/3]).
 
 -include("rabbit_mgmt.hrl").
--include_lib("webmachine/include/webmachine.hrl").
 -include_lib("amqp_client/include/amqp_client.hrl").
 
 %%--------------------------------------------------------------------
-init(_Config) -> {ok, #context{}}.
+
+init(_, _, _) -> {upgrade, protocol, cowboy_rest}.
+
+rest_init(Req, _Config) -> {ok, Req, #context{}}.
 
 content_types_provided(ReqData, Context) ->
-   {[{"application/json", to_json}], ReqData, Context}.
+   {[{<<"application/json">>, to_json}], ReqData, Context}.
 
 content_types_accepted(ReqData, Context) ->
-   {[{"application/json", accept_json},
-     {"multipart/form-data", accept_multipart}], ReqData, Context}.
+   {[{<<"application/json">>, accept_json},
+     {<<"multipart/form-data">>, accept_multipart}], ReqData, Context}.
 
 allowed_methods(ReqData, Context) ->
-    {['HEAD', 'GET', 'POST'], ReqData, Context}.
+    {[<<"HEAD">>, <<"GET">>, <<"POST">>], ReqData, Context}.
 
+%% @todo Yeah this won't work as-is.
 post_is_create(ReqData, Context) ->
     {true, ReqData, Context}.
 
@@ -67,12 +70,12 @@ to_json(ReqData, Context) ->
          {queues,      Qs},
          {exchanges,   Xs},
          {bindings,    Bs}]),
-      case wrq:get_qs_value("download", ReqData) of
-          undefined -> ReqData;
-          Filename  -> rabbit_mgmt_util:set_resp_header(
+      case cowboy_req:qs_val(<<"download">>, ReqData) of
+          {undefined, _} -> ReqData;
+          {Filename, _}  -> rabbit_mgmt_util:set_resp_header(
                          "Content-Disposition",
                          "attachment; filename=" ++
-                             mochiweb_util:unquote(Filename), ReqData)
+                             binary_to_list(Filename), ReqData)
       end,
       Context).
 
@@ -99,9 +102,9 @@ accept_multipart(ReqData, Context) ->
     end.
 
 is_authorized(ReqData, Context) ->
-    case wrq:get_qs_value("auth", ReqData) of
-        undefined -> rabbit_mgmt_util:is_authorized_admin(ReqData, Context);
-        Auth      -> is_authorized_qs(ReqData, Context, Auth)
+    case cowboy_req:qs_val(<<"auth">>, ReqData) of
+        {undefined, _} -> rabbit_mgmt_util:is_authorized_admin(ReqData, Context);
+        {Auth, _}      -> is_authorized_qs(ReqData, Context, Auth)
     end.
 
 %% Support for the web UI - it can't add a normal "authorization"

@@ -16,22 +16,22 @@
 
 -module(rabbit_mgmt_wm_bindings).
 
--export([init/1, to_json/2, content_types_provided/2, is_authorized/2]).
+-export([init/3, rest_init/2, to_json/2, content_types_provided/2, is_authorized/2]).
 -export([allowed_methods/2, post_is_create/2, create_path/2]).
 -export([content_types_accepted/2, accept_content/2, resource_exists/2]).
 -export([basic/1, augmented/2]).
 
 -include("rabbit_mgmt.hrl").
--include_lib("webmachine/include/webmachine.hrl").
 -include_lib("amqp_client/include/amqp_client.hrl").
 
 %%--------------------------------------------------------------------
 
-init([Mode]) ->
-    {ok, {Mode, #context{}}}.
+init(_, _, _) -> {upgrade, protocol, cowboy_rest}.
+
+rest_init(Req, [Mode]) -> {ok, Req, {Mode, #context{}}}.
 
 content_types_provided(ReqData, Context) ->
-   {[{"application/json", to_json}], ReqData, Context}.
+   {[{<<"application/json">>, to_json}], ReqData, Context}.
 
 resource_exists(ReqData, {Mode, Context}) ->
     {case list_bindings(Mode, ReqData) of
@@ -44,8 +44,8 @@ content_types_accepted(ReqData, Context) ->
 
 allowed_methods(ReqData, {Mode, Context}) ->
     {case Mode of
-         source_destination -> ['HEAD', 'GET', 'POST'];
-         _                  -> ['HEAD', 'GET']
+         source_destination -> [<<"HEAD">>, <<"GET">>, <<"POST">>];
+         _                  -> [<<"HEAD">>, <<"GET">>]
      end, ReqData, {Mode, Context}}.
 
 post_is_create(ReqData, Context) ->

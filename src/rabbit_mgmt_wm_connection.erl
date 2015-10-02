@@ -16,22 +16,23 @@
 
 -module(rabbit_mgmt_wm_connection).
 
--export([init/1, resource_exists/2, to_json/2, content_types_provided/2,
+-export([init/3, rest_init/2, resource_exists/2, to_json/2, content_types_provided/2,
          is_authorized/2, allowed_methods/2, delete_resource/2, conn/1]).
 
 -include("rabbit_mgmt.hrl").
--include_lib("webmachine/include/webmachine.hrl").
 -include_lib("rabbit_common/include/rabbit.hrl").
 
 %%--------------------------------------------------------------------
 
-init(_Config) -> {ok, #context{}}.
+init(_, _, _) -> {upgrade, protocol, cowboy_rest}.
+
+rest_init(Req, _Config) -> {ok, Req, #context{}}.
 
 content_types_provided(ReqData, Context) ->
-   {[{"application/json", to_json}], ReqData, Context}.
+   {[{<<"application/json">>, to_json}], ReqData, Context}.
 
 allowed_methods(ReqData, Context) ->
-    {['HEAD', 'GET', 'DELETE'], ReqData, Context}.
+    {[<<"HEAD">>, <<"GET">>, <<"DELETE">>], ReqData, Context}.
 
 resource_exists(ReqData, Context) ->
     case conn(ReqData) of
