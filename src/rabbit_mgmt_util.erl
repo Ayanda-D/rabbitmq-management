@@ -213,8 +213,8 @@ reply_list(Facts, DefaultSorts, ReqData, Context, Pagination) ->
 	sort_list(
           extract_columns_list(Facts, ReqData),
           DefaultSorts,
-          wrq:get_qs_value("sort", ReqData),
-          wrq:get_qs_value("sort_reverse", ReqData), Pagination),
+          element(1, cowboy_req:qs_val(<<"sort">>, ReqData)),
+          element(1, cowboy_req:qs_val(<<"sort_reverse">>, ReqData)), Pagination),
 
     reply(SortList, ReqData, Context).
 
@@ -284,21 +284,21 @@ maybe_filter_by_keyword(_, _, _, _) ->
     true.
 
 check_request_param(V, ReqData) ->
-    case wrq:get_qs_value(V, ReqData) of
-	undefined -> undefined;
-	Str       -> list_to_integer(Str)
+    case cowboy_req:qs_val(V, ReqData) of
+	{undefined, _} -> undefined;
+	{Str, _}       -> list_to_integer(binary_to_list(Str))
     end.
 
 get_value_param(V, ReqData) ->
-    wrq:get_qs_value(V, ReqData).
+    element(1, cowboy_req:qs_val(V, ReqData)).
 
 %% Validates and returns pagination parameters:
 %% Page is assumed to be > 0, PageSize > 0 PageSize <= ?MAX_PAGE_SIZE
 pagination_params(ReqData) ->
-    PageNum  = check_request_param("page", ReqData),
-    PageSize = check_request_param("page_size", ReqData),
-    Name = get_value_param("name", ReqData),
-    UseRegex = get_value_param("use_regex", ReqData),
+    PageNum  = check_request_param(<<"page">>, ReqData),
+    PageSize = check_request_param(<<"page_size">>, ReqData),
+    Name = get_value_param(<<"name">>, ReqData),
+    UseRegex = get_value_param(<<"use_regex">>, ReqData),
     case {PageNum, PageSize} of
         {undefined, _} ->
             undefined;

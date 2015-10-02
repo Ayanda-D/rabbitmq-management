@@ -40,7 +40,7 @@ resource_exists(ReqData, {Mode, Context}) ->
      end, ReqData, {Mode, Context}}.
 
 content_types_accepted(ReqData, Context) ->
-   {[{"application/json", accept_content}], ReqData, Context}.
+   {[{<<"application/json">>, accept_content}], ReqData, Context}.
 
 allowed_methods(ReqData, {Mode, Context}) ->
     {case Mode of
@@ -62,12 +62,13 @@ to_json(ReqData, {Mode, Context}) ->
 create_path(ReqData, Context) ->
     {"dummy", ReqData, Context}.
 
-accept_content(ReqData, {_Mode, Context}) ->
+accept_content(ReqData0, {_Mode, Context}) ->
+    {ok, Body, ReqData} = cowboy_req:body(ReqData0),
     Source = rabbit_mgmt_util:id(source, ReqData),
     Dest = rabbit_mgmt_util:id(destination, ReqData),
     DestType = rabbit_mgmt_util:id(dtype, ReqData),
     VHost = rabbit_mgmt_util:vhost(ReqData),
-    {ok, Props} = rabbit_mgmt_util:decode(wrq:req_body(ReqData)),
+    {ok, Props} = rabbit_mgmt_util:decode(Body),
     {Method, Key, Args} = method_key_args(DestType, Source, Dest, Props),
     Response = rabbit_mgmt_util:amqp_request(VHost, ReqData, Context, Method),
     case Response of
@@ -75,7 +76,7 @@ accept_content(ReqData, {_Mode, Context}) ->
             Res;
         {true, ReqData, Context2} ->
             Loc = rabbit_web_dispatch_util:relativise(
-                    wrq:path(ReqData),
+                    binary_to_list(element(1, cowboy_req:path(ReqData))),
                     binary_to_list(
                       rabbit_mgmt_format:url(
                         "/api/bindings/~s/e/~s/~s/~s/~s",

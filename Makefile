@@ -1,6 +1,7 @@
 PROJECT = rabbitmq_management
 
-DEPS = amqp_client webmachine rabbitmq_web_dispatch rabbitmq_management_agent
+DEPS = amqp_client cowboy rabbitmq_web_dispatch rabbitmq_management_agent
+dep_cowboy_commit = 1.0.3
 
 DEP_PLUGINS = rabbit_common/mk/rabbitmq-plugin.mk
 

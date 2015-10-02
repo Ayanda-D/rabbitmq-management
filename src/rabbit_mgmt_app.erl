@@ -65,41 +65,41 @@ make_loop(IgnoreApps) ->
 %% @todo Redirects.
 %    fun(Req) -> respond(Req, LocalPaths, WMLoop) end.
 
-respond(Req, LocalPaths, WMLoop) ->
-    Path = Req:get(path),
-    Redirect = fun(L) -> {301, [{"Location", L}], ""} end,
-    case Path of
-        "/api/" ++ Rest when length(Rest) > 0 ->
-            WMLoop(Req);
-%% @todo Figure out those.
-        "" ->
-            Req:respond(Redirect("/"));
-        "/mgmt/" ->
-            Req:respond(Redirect("/"));
-        "/mgmt" ->
-            Req:respond(Redirect("/"));
-        "/" ++ Stripped ->
-            serve_file(Req, Stripped, LocalPaths, Redirect)
-    end.
-
-serve_file(Req, Path, [LocalPath], _Redirect) ->
-    Req:serve_file(Path, LocalPath);
-serve_file(Req, Path, [LocalPath | Others], Redirect) ->
-    Path1 = filename:join([LocalPath, Path]),
-    case filelib:is_regular(Path1) of
-        true  -> Req:serve_file(Path, LocalPath);
-        false -> case filelib:is_regular(Path1 ++ "/index.html") of
-                     true  -> index(Req, Path, LocalPath, Redirect);
-                     false -> serve_file(Req, Path, Others, Redirect)
-                 end
-    end.
-
-index(Req, Path, LocalPath, Redirect) ->
-    case lists:reverse(Path) of
-        ""       -> Req:serve_file("index.html", LocalPath);
-        "/" ++ _ -> Req:serve_file(Path ++ "index.html", LocalPath);
-        _        -> Req:respond(Redirect(Path ++ "/"))
-    end.
+%respond(Req, LocalPaths, WMLoop) ->
+%    Path = Req:get(path),
+%    Redirect = fun(L) -> {301, [{"Location", L}], ""} end,
+%    case Path of
+%        "/api/" ++ Rest when length(Rest) > 0 ->
+%            WMLoop(Req);
+%%% @todo Figure out those.
+%        "" ->
+%            Req:respond(Redirect("/"));
+%        "/mgmt/" ->
+%            Req:respond(Redirect("/"));
+%        "/mgmt" ->
+%            Req:respond(Redirect("/"));
+%        "/" ++ Stripped ->
+%            serve_file(Req, Stripped, LocalPaths, Redirect)
+%    end.
+%
+%serve_file(Req, Path, [LocalPath], _Redirect) ->
+%    Req:serve_file(Path, LocalPath);
+%serve_file(Req, Path, [LocalPath | Others], Redirect) ->
+%    Path1 = filename:join([LocalPath, Path]),
+%    case filelib:is_regular(Path1) of
+%        true  -> Req:serve_file(Path, LocalPath);
+%        false -> case filelib:is_regular(Path1 ++ "/index.html") of
+%                     true  -> index(Req, Path, LocalPath, Redirect);
+%                     false -> serve_file(Req, Path, Others, Redirect)
+%                 end
+%    end.
+%
+%index(Req, Path, LocalPath, Redirect) ->
+%    case lists:reverse(Path) of
+%        ""       -> Req:serve_file("index.html", LocalPath);
+%        "/" ++ _ -> Req:serve_file(Path ++ "index.html", LocalPath);
+%        _        -> Req:respond(Redirect(Path ++ "/"))
+%    end.
 
 setup_wm_logging() ->
     rabbit_webmachine:setup(),

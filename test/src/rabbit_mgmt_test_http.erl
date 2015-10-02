@@ -1314,9 +1314,9 @@ publish_unrouted_test() ->
                  http_post("/exchanges/%2f/amq.default/publish", Msg, ?OK)).
 
 if_empty_unused_test() ->
-    http_put("/exchanges/%2f/test", [], ?NO_CONTENT),
+    http_put("/exchanges/%2f/test", [], ?CREATED),
     http_put("/queues/%2f/test", [], ?NO_CONTENT),
-    http_post("/bindings/%2f/e/test/q/test", [], ?CREATED),
+    http_post("/bindings/%2f/e/test/q/test", [], ?NO_CONTENT),
     http_post("/exchanges/%2f/amq.default/publish",
               msg(<<"test">>, [], <<"Hello world">>), ?OK),
     http_delete("/queues/%2f/test?if-empty=true", ?BAD_REQUEST),
@@ -1336,8 +1336,8 @@ if_empty_unused_test() ->
 parameters_test() ->
     rabbit_runtime_parameters_test:register(),
 
-    http_put("/parameters/test/%2f/good", [{value, <<"ignore">>}], ?NO_CONTENT),
-    http_put("/parameters/test/%2f/maybe", [{value, <<"good">>}], ?NO_CONTENT),
+    http_put("/parameters/test/%2f/good", [{value, <<"ignore">>}], ?CREATED),
+    http_put("/parameters/test/%2f/maybe", [{value, <<"good">>}], ?CREATED),
     http_put("/parameters/test/%2f/maybe", [{value, <<"bad">>}], ?BAD_REQUEST),
     http_put("/parameters/test/%2f/bad", [{value, <<"good">>}], ?BAD_REQUEST),
     http_put("/parameters/test/um/good", [{value, <<"ignore">>}], ?NOT_FOUND),
@@ -1386,11 +1386,11 @@ policy_test() ->
     http_put(
       "/policies/%2f/policy_pos",
       lists:keydelete(key, 1, PolicyPos),
-      ?NO_CONTENT),
+      ?CREATED),
     http_put(
       "/policies/%2f/policy_even",
       lists:keydelete(key, 1, PolicyEven),
-      ?NO_CONTENT),
+      ?CREATED),
     assert_item(PolicyPos,  http_get("/policies/%2f/policy_pos",  ?OK)),
     assert_item(PolicyEven, http_get("/policies/%2f/policy_even", ?OK)),
     List = [PolicyPos, PolicyEven],
@@ -1410,25 +1410,25 @@ policy_permissions_test() ->
     http_put("/users/admin",  [{password, <<"admin">>},
                                {tags, <<"administrator">>}], ?NO_CONTENT),
     http_put("/users/mon",    [{password, <<"monitor">>},
-                               {tags, <<"monitoring">>}], ?NO_CONTENT),
+                               {tags, <<"monitoring">>}], ?CREATED),
     http_put("/users/policy", [{password, <<"policy">>},
-                               {tags, <<"policymaker">>}], ?NO_CONTENT),
+                               {tags, <<"policymaker">>}], ?CREATED),
     http_put("/users/mgmt",   [{password, <<"mgmt">>},
-                               {tags, <<"management">>}], ?NO_CONTENT),
+                               {tags, <<"management">>}], ?CREATED),
     Perms = [{configure, <<".*">>},
              {write,     <<".*">>},
              {read,      <<".*">>}],
-    http_put("/vhosts/v", none, ?NO_CONTENT),
-    http_put("/permissions/v/admin",  Perms, ?NO_CONTENT),
-    http_put("/permissions/v/mon",    Perms, ?NO_CONTENT),
-    http_put("/permissions/v/policy", Perms, ?NO_CONTENT),
-    http_put("/permissions/v/mgmt",   Perms, ?NO_CONTENT),
+    http_put("/vhosts/v", none, ?CREATED),
+    http_put("/permissions/v/admin",  Perms, ?CREATED),
+    http_put("/permissions/v/mon",    Perms, ?CREATED),
+    http_put("/permissions/v/policy", Perms, ?CREATED),
+    http_put("/permissions/v/mgmt",   Perms, ?CREATED),
 
     Policy = [{pattern,    <<".*">>},
               {definition, [{<<"ha-mode">>, <<"all">>}]}],
     Param = [{value, <<"">>}],
 
-    http_put("/policies/%2f/HA", Policy, ?NO_CONTENT),
+    http_put("/policies/%2f/HA", Policy, ?CREATED),
     http_put("/parameters/test/%2f/good", Param, ?NO_CONTENT),
 
     Pos = fun (U) ->
